@@ -5,5 +5,5 @@ window.CC_ACESSO = {
   supabaseAnonKey: 'sb_publishable_OcygLYbRigJuXiCy2DH3Nw_hH6fRVuJ',
   bucket: 'painel',
   dominio: 'apepi.org',
-  microsoft: false // passa a true quando o login com Microsoft estiver configurado no Supabase
+  microsoft: true // login com a conta Microsoft da APEPI (app "Painel Cuidado Continuado" no Azure; segredo vence em 11/2028)
 };
