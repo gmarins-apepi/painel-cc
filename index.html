@@ -1,0 +1,615 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="robots" content="noindex,nofollow"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script src="config.js"></script><script src="acesso.js"></script></head><body>
+<title>Indicadores do Cuidado Continuado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: banner inteiro no topo, barra de controle, faixa de números principais e grade de cartões curtos. */
+  :root {
+    --bg: #e9eee2;
+    --card: #fbfcf8;
+    --fg: #26232b;
+    --muted: #667060;
+    --line: #dbe3d1;
+    --g1: #3f6600;
+    --g2: #5b8f0b;
+    --g3: #8cc35a;
+    --track: #e3eadb;
+    --violet: #453068;
+    --violet-ink: #ffffff;
+    --violet-soft: #ede7f4;
+    --ok: #2f7a1a;
+    --warn: #a35a00;
+    --bad: #b3362c;
+    --font-title: Candara, "Trebuchet MS", "Segoe UI", sans-serif;
+    --font-body: Calibri, "Segoe UI", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151816; --card: #1f2420; --fg: #ecefe7; --muted: #a3ae98; --line: #313a30;
+      --g1: #a6d977; --g2: #86c255; --g3: #5f9a35; --track: #2a3229;
+      --violet: #3c2b5e; --violet-ink: #f3eeff; --violet-soft: #29233a;
+      --ok: #8fd06a; --warn: #f0b65a; --bad: #f08a80;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151816; --card: #1f2420; --fg: #ecefe7; --muted: #a3ae98; --line: #313a30;
+    --g1: #a6d977; --g2: #86c255; --g3: #5f9a35; --track: #2a3229;
+    --violet: #3c2b5e; --violet-ink: #f3eeff; --violet-soft: #29233a;
+    --ok: #8fd06a; --warn: #f0b65a; --bad: #f08a80;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+  .banner { display: block; width: 100%; height: auto; border-radius: 18px; }
+  .bar-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+  .eyebrow { font-family: var(--font-title); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; color: var(--g2); margin: 0; }
+  h1 { font-family: var(--font-title); font-size: 32px; line-height: 1.1; margin: 2px 0 0; color: var(--g1); }
+  .sub { font-size: 13px; color: var(--muted); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; border-radius: 999px; padding: 2px 9px; background: var(--violet-soft); color: var(--violet); }
+  :root[data-theme="dark"] .pill { color: var(--violet-ink); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pill { color: var(--violet-ink); } }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  select, .btn { font: inherit; font-size: 14px; border-radius: 10px; padding: 8px 12px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  select { padding-right: 32px; min-width: 190px; cursor: pointer; }
+  .btn { cursor: pointer; font-weight: 700; }
+  .btn.primary { background: var(--violet); border-color: var(--violet); color: var(--violet-ink); }
+  .btn[disabled] { opacity: .45; cursor: default; }
+  select:focus-visible, .btn:focus-visible { outline: 3px solid var(--g2); outline-offset: 2px; }
+  .status { font-size: 12px; color: var(--muted); width: 100%; text-align: right; min-height: 1em; }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: var(--card); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .kpi .v { font-family: var(--font-title); font-size: 30px; font-weight: 700; color: var(--g1); line-height: 1; font-variant-numeric: tabular-nums; }
+  .kpi .v.na { font-size: 15px; font-weight: 400; color: var(--muted); padding-block: 8px; }
+  .kpi .l { font-size: 13px; line-height: 1.25; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+  .chip { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 7px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.up { color: var(--ok); border-color: var(--ok); }
+  .chip.down { color: var(--bad); border-color: var(--bad); }
+  .chip.meta-ok { color: var(--ok); border-color: var(--ok); }
+  .chip.meta-no { color: var(--warn); border-color: var(--warn); }
+
+  .grid { display: grid; gap: 14px; }
+  .g-2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .g-1-1 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .g-2-1, .g-1-1, .g-3 { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--card); border-radius: 16px; padding: 16px 18px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .card h2 { font-family: var(--font-title); font-size: 17px; margin: 0; color: var(--fg); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card h2 small { font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--muted); }
+  .cap { font-size: 12px; color: var(--muted); margin: 0; }
+  .big { font-family: var(--font-title); font-size: 36px; font-weight: 700; line-height: 1; color: var(--g1); font-variant-numeric: tabular-nums; }
+  .big small { font-family: var(--font-body); font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+
+  .funnel { display: grid; grid-template-columns: 56px minmax(0, 1fr) 84px; gap: 8px 12px; align-items: center; }
+  .funnel .n { font-family: var(--font-title); font-size: 22px; font-weight: 700; color: var(--g1); text-align: right; font-variant-numeric: tabular-nums; }
+  .funnel .p { font-family: var(--font-title); font-size: 18px; font-weight: 700; color: var(--g2); font-variant-numeric: tabular-nums; }
+  .track { background: var(--track); border-radius: 8px; height: 28px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 4px 8px 8px 4px; display: flex; align-items: center; padding-left: 10px; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; min-width: 4px; }
+
+  .bars { display: flex; flex-direction: column; gap: 7px; }
+  .brow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-size: 13px; }
+  .brow .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brow .bt { background: var(--track); border-radius: 6px; height: 10px; overflow: hidden; }
+  .brow .bf { height: 100%; border-radius: 6px; background: var(--g2); }
+  .brow .bv { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+  .stages { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 760px) { .stages { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .stage { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+  .stage .box { height: 64px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; color: #fff; }
+  .stage .box b { font-family: var(--font-title); font-size: 24px; line-height: 1; }
+  .stage .box span { font-size: 11px; opacity: .9; }
+  .stage .zero { border: 1.5px dashed var(--line); background: transparent; color: var(--muted); }
+  .stage .lbl { font-size: 10px; letter-spacing: .1em; font-weight: 700; color: var(--muted); }
+  .stage .nm { font-size: 12px; line-height: 1.15; }
+  .stage .warn { font-size: 11px; font-weight: 700; color: var(--warn); }
+
+  .human { background: var(--violet); color: var(--violet-ink); border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .human .eyebrow { color: var(--violet-ink); opacity: .8; }
+  .human .big { color: var(--violet-ink); }
+  .human .big small { color: var(--violet-ink); opacity: .75; }
+  .human .kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .human .kv div { font-size: 12px; opacity: .9; line-height: 1.25; }
+  .human .kv b { display: block; font-family: var(--font-title); font-size: 22px; opacity: 1; }
+
+  .meter { position: relative; background: var(--track); border-radius: 8px; height: 14px; }
+  .meter .mf { height: 100%; border-radius: 8px; background: var(--g2); }
+  .meter .mk { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
+  .meter-lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+  .split { display: flex; height: 26px; border-radius: 8px; overflow: hidden; gap: 2px; }
+  .split div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 700; font-size: 12px; border-bottom: 1px solid var(--line); padding: 5px 6px; }
+  td { border-bottom: 1px solid var(--line); padding: 5px 6px; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+  th.n, td.n { text-align: right; white-space: nowrap; }
+  td.heat { text-align: center; font-weight: 700; border-radius: 6px; }
+
+  .alerts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .alerts li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 14px; }
+  .alerts .num { width: 26px; height: 26px; border-radius: 50%; background: var(--violet-soft); color: var(--violet); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  :root[data-theme="dark"] .alerts .num { color: var(--violet-ink); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .alerts .num { color: var(--violet-ink); } }
+  .state { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+  .state.done { color: var(--ok); border: 1px solid var(--ok); }
+  .state.open { color: var(--warn); border: 1px solid var(--warn); }
+
+  .na-block { background: var(--violet-soft); border-radius: 16px; padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+  .na-block .eyebrow { color: var(--violet); width: 100%; }
+  :root[data-theme="dark"] .na-block .eyebrow { color: var(--violet-ink); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .na-block .eyebrow { color: var(--violet-ink); } }
+  .na-item { font-size: 13px; }
+  .na-item b { display: block; font-size: 14px; }
+  details { background: var(--card); border-radius: 16px; padding: 12px 18px; }
+  summary { cursor: pointer; font-family: var(--font-title); font-weight: 700; font-size: 15px; }
+  details ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; }
+  .xbtn { font: inherit; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--g2); background: transparent; color: var(--g1); cursor: pointer; white-space: nowrap; margin-left: auto; }
+  .human .xbtn { border-color: var(--violet-ink); color: var(--violet-ink); }
+  .xbtn:hover { background: var(--track); }
+  .xbtn:focus-visible { outline: 2px solid var(--g2); outline-offset: 2px; }
+  .xbtn[disabled] { opacity: .5; cursor: default; }
+  .card h2 small + .xbtn { margin-left: 8px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; align-self: flex-start; }
+  .tab { font: inherit; font-size: 14px; font-weight: 700; border: 0; background: transparent; color: var(--muted); padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--violet); color: var(--violet-ink); }
+  .tab:focus-visible { outline: 3px solid var(--g2); outline-offset: 2px; }
+  .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .duo div { font-size: 12px; color: var(--muted); line-height: 1.25; }
+  .duo b { display: block; font-family: var(--font-title); font-size: 22px; color: var(--g1); }
+  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); padding-top: 6px; }
+</style>
+
+<div class="wrap">
+  <img class="banner" src="assets/cabecalho_cc.png" alt="APEPI, cuidado continuado, programa de acompanhamento">
+  <div class="tabs" role="tablist" aria-label="Painéis">
+    <button class="tab" role="tab" id="tab-prog" type="button" aria-selected="true">Indicadores do programa</button>
+    <button class="tab" role="tab" id="tab-clin" type="button" aria-selected="false">Indicadores clínicos</button>
+  </div>
+  <div class="bar-top">
+    <div>
+      <p class="eyebrow" id="olho">Indicadores do programa</p>
+      <h1 id="titulo">Cuidado Continuado</h1>
+      <div class="sub" id="info">Carregando indicadores.</div>
+    </div>
+    <div class="controls">
+      <label for="mes" class="eyebrow" style="letter-spacing:.08em">Mês</label>
+      <select id="mes" aria-label="Mês de referência"></select>
+      <button class="btn primary" id="pdf-exec" type="button" disabled>PDF executivo</button>
+      <button class="btn" id="pdf-comp" type="button" disabled>PDF completo</button>
+      <div class="status" id="pdf-status" role="status"></div>
+    </div>
+  </div>
+  <div id="conteudo"><div class="card empty">Os indicadores aparecem aqui assim que os dados carregam.</div></div>
+  <footer><span>APEPI · Projetos e Programas Estratégicos</span><span>Cuidado Continuado · Indicadores mensais</span></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  var DADOS = null, atual = null, downloads = null, DET = {};
+  var XMAP = [
+    ['Do convite à anamnese', ['conversao']], ['Canal de contato humano', ['tempo_resposta', 'postura']], ['Onde estão os pacientes', ['etapas_atual']],
+    ['Saídas do funil', ['saidas']], ['Check-ins', ['checkins']], ['Engajamento', ['engajamento']], ['Entrada e cobertura', ['entradas', 'cobertura']],
+    ['Resposta ao convite', ['conversao']], ['Efeitos relatados', ['efeitos']], ['Assuntos das conversas', ['assuntos']],
+    ['Tempo até a 1ª resposta', ['tempo_resposta']], ['Postura do atendimento', ['postura']]
+  ];
+  var ABA = { conversao: 'Conversão', tempo_resposta: 'Tempo de resposta', postura: 'Postura', etapas_atual: 'Etapas hoje', saidas: 'Saídas', checkins: 'Check-ins', engajamento: 'Engajamento', entradas: 'Entradas', cobertura: 'Cobertura', efeitos: 'Efeitos relatados', assuntos: 'Assuntos' };
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var num = function (v, d) { return v == null ? '–' : Number(v).toLocaleString('pt-BR', {minimumFractionDigits: d || 0, maximumFractionDigits: d || 0}); };
+  var pct = function (v) { return v == null ? '–' : num(v, 1) + '%'; };
+  var dataBR = function (s) { if (!s) return ''; var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+  var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  var abrev = function (k) { return MESES[Number(k.slice(5, 7)) - 1] + '/' + k.slice(2, 4); };
+  var chaves = function () { return Object.keys(DADOS.meses).sort(); };
+  var chavesMes = chaves;
+  var anterior = function (k) { var m = chaves(), i = m.indexOf(k); return i > 0 ? m[i - 1] : null; };
+
+  var semComparacao = false;
+  function delta(v, ant, tipo, kAnt) {
+    if (v == null || semComparacao) return '';
+    if (ant == null) return '<span class="chip">' + (kAnt ? abrev(kAnt) + ': não apurado' : 'Linha de base') + '</span>';
+    var d = v - ant, s = d > 0 ? '+' : d < 0 ? '−' : '';
+    var txt = tipo === 'pp' ? s + num(Math.abs(d), 1) + ' p.p.' : s + num(Math.abs(d));
+    return '<span class="chip ' + (d > 0 ? 'up' : d < 0 ? 'down' : '') + '" title="' + abrev(kAnt) + ': ' + (tipo === 'pp' ? pct(ant) : num(ant)) + '">' + txt + ' vs ' + abrev(kAnt) + '</span>';
+  }
+  function meta(v, m) { if (v == null) return ''; return '<span class="chip ' + (v >= m ? 'meta-ok' : 'meta-no') + '">Meta ' + m + '% ' + (v >= m ? '✓' : '✗') + '</span>'; }
+  function kpi(v, rot, chips) { return '<div class="kpi">' + (v == null ? '<div class="v na">não apurado</div>' : '<div class="v">' + v + '</div>') + '<div class="l">' + rot + '</div><div class="chips">' + (chips || '') + '</div></div>'; }
+  function barras(itens, max) {
+    max = max || Math.max.apply(null, itens.map(function (x) { return x[1]; }).concat([1]));
+    return '<div class="bars">' + itens.map(function (x) { return '<div class="brow" title="' + esc(x[0]) + ': ' + num(x[1]) + '"><span class="t">' + esc(x[0]) + '</span><span class="bt"><span class="bf" style="display:block;width:' + (100 * x[1] / max) + '%"></span></span><span class="bv">' + (x[2] || num(x[1])) + '</span></div>'; }).join('') + '</div>';
+  }
+  function etapas(arr, parados) {
+    var nomes = ['Convite', 'Anamnese', 'Check-in mensal', '1º formulário', 'Celebração', 'Bimestral inicial', '2º formulário', 'Bimestral geral'];
+    var cores = ['var(--g1)', 'var(--g2)', 'var(--g3)'];
+    return '<div class="stages">' + arr.map(function (n, i) {
+      var box = n > 0 ? '<div class="box" style="background:' + (cores[i] || 'var(--g3)') + '"><b>' + num(n) + '</b><span>pacientes</span></div>' : '<div class="box zero"><b>0</b></div>';
+      var p = parados && parados[i] ? '<div class="warn">' + parados[i] + ' parados</div>' : '';
+      return '<div class="stage">' + box + '<div class="lbl">ETAPA ' + (i + 1) + '</div><div class="nm">' + nomes[i] + '</div>' + p + '</div>';
+    }).join('') + '</div>';
+  }
+  function funil(conv, aceit, anam, extraCap, pAceite, pAnam) {
+    var linha = function (n, w, cor, rot, p) { return '<div class="n">' + num(n) + '</div><div class="track"><div class="fill" style="width:' + w + '%;background:' + cor + '">' + rot + '</div></div><div class="p">' + (p || '') + '</div>'; };
+    return '<div class="funnel">' + linha(conv, 100, 'var(--g1)', 'convidados', '') + linha(aceit, 100 * aceit / conv, 'var(--g2)', 'aceitaram', pct(pAceite != null ? pAceite : 100 * aceit / conv)) + linha(anam, 100 * anam / conv, 'var(--g3)', 'anamnese', pct(pAnam != null ? pAnam : 100 * anam / aceit)) + '</div>' + (extraCap ? '<p class="cap">' + extraCap + '</p>' : '');
+  }
+  function serie() {
+    var ks = chaves();
+    var lin = function (rot, f, fmt) { return '<tr><td>' + rot + '</td>' + ks.map(function (k) { var v = f(DADOS.meses[k]); return '<td class="n">' + (v == null ? '<span class="empty">–</span>' : fmt(v)) + '</td>'; }).join('') + '</tr>'; };
+    return '<div class="card"><h2>Série histórica <small>setembro é parcial (retomada em 09/09)</small></h2><div class="tablewrap"><table><tr><th>Indicador</th>' + ks.map(function (k) { return '<th class="n">' + abrev(k) + '</th>'; }).join('') + '</tr>' +
+      lin('Novos convidados', function (m) { return m.principais.entradas_novos != null ? m.principais.entradas_novos : m.principais.convites_novos; }, num) +
+      lin('Aceite do convite', function (m) { return m.principais.aceite_pct; }, pct) +
+      lin('Até a anamnese', function (m) { return m.principais.anamnese_pct; }, pct) +
+      lin('Engajamento', function (m) { return m.principais.engajamento_pct; }, pct) +
+      lin('Resposta ao check-in', function (m) { return m.principais.resposta_checkin_pct; }, pct) +
+      lin('Resposta humana no mesmo dia', function (m) { return m.principais.pct_mesmo_dia_util; }, pct) +
+      lin('Ativos no fim do mês', function (m) { return m.foto ? m.foto.total_ativos : (m.C_jornada.foto_31_10 || m.C_jornada.foto_atual || {}).total_abertos; }, num) +
+      '</table></div></div>';
+  }
+
+  function renderSetembro(k, m) {
+    var f = m.funil;
+    var h = '<div class="kpis">' + kpi(num(f.convites), 'pacientes novos convidados', delta(f.convites, null)) + kpi(pct(m.principais.aceite_pct), 'aceitaram o convite', delta(1, null)) + kpi(pct(m.principais.anamnese_pct), 'de quem aceitou fez a anamnese', delta(1, null)) + kpi(null, 'engajamento', meta(null, 60)) + kpi(num(m.foto.total_ativos), 'pacientes ativos', '') + kpi(num(m.canal_humano.conversas_atendidas), 'conversas com a farmacêutica', '') + '</div>';
+    h += '<div class="grid g-2-1"><div class="card"><h2>Do convite à anamnese <small>regra de setembro</small></h2>' + funil(f.convites, f.aceites, f.anamneses) + '</div>';
+    h += '<div class="card"><h2>Saídas do funil</h2><div class="big">' + num(m.saidas.total) + '<small>' + pct(m.saidas.pct_convites) + ' dos convites</small></div><p class="cap">' + esc(m.saidas.observacao) + '</p></div></div>';
+    h += '<div class="card"><h2>Onde estavam os pacientes <small>' + num(m.foto.total_ativos) + ' ativos</small></h2>' + etapas(m.foto.etapas) + '</div>';
+    h += '<div class="na-block"><p class="eyebrow">Não medido em setembro</p>' + m.nao_apurado.map(function (x) { return '<div class="na-item"><b>' + esc(x.indicador) + '</b>' + esc(x.motivo) + '</div>'; }).join('') + '</div>';
+    return h + serie();
+  }
+
+  /* ---------- Desde o início: soma os meses apurados, mantendo o formato de um mês ---------- */
+  var ACUM = null;
+  function acumulado() {
+    var ks = chaves(), Ms = ks.map(function (k) { return DADOS.meses[k]; });
+    var ap = Ms.filter(function (m) { return m.A_entrada; }), ult = ap[ap.length - 1] || Ms[Ms.length - 1];
+    var soma = function (arr, f) { var t = 0, ok = false; arr.forEach(function (x) { var v = f(x); if (v != null && !isNaN(v)) { t += Number(v); ok = true; } }); return ok ? t : null; };
+    var r1 = function (v) { return v == null ? null : Math.round(v * 10) / 10; };
+    var juntar = function (listas) { var o = {}, ordem = []; listas.forEach(function (l) { (l || []).forEach(function (p) { if (!(p[0] in o)) { o[p[0]] = 0; ordem.push(p[0]); } o[p[0]] += p[1]; }); }); return ordem.map(function (k) { return [k, o[k]]; }).sort(function (a, b) { return b[1] - a[1]; }); };
+    var pond = function (arr, fv, fp) { var n = 0, d = 0; arr.forEach(function (x) { var v = fv(x), p = fp(x); if (v != null && p) { n += v * p; d += p; } }); return d ? r1(n / d) : null; };
+    var NOMES = { Recusa_CC: 'Recusou o convite (Recusa_CC)', Sem_resposta_CC: 'Sem resposta ao convite (Sem_resposta_CC)', Sem_Resposta_Anamnese: 'Sem resposta à anamnese (Sem_Resposta_Anamnese)', 'sem motivo registrado': 'Sem motivo registrado' };
+    // Conversão: cada mês pela regra de outubro (setembro pela atualização das entradas).
+    var Bs = Ms.map(function (m) { return m.B_conversao || m.atualizacao_entradas; }).filter(Boolean);
+    var B = {}; ['novos', 'aceite', 'ja_participo', 'recusa', 'sem_resposta_tag', 'ainda_sem_resposta', 'ainda_no_prazo', 'aceitaram_total', 'anamnese_chegada_etapa3', 'resposta_anamnese_tag'].forEach(function (c) { B[c] = soma(Bs, function (b) { return b[c]; }); });
+    B.aceite_pct = r1(100 * B.aceite / B.novos); B.anamnese_pct = r1(100 * B.anamnese_chegada_etapa3 / B.aceitaram_total);
+    B.recusa_pct = r1(100 * B.recusa / B.novos); B.sem_resposta_pct = r1(100 * B.sem_resposta_tag / B.novos); B.resposta_anamnese_tag_pct = r1(100 * B.resposta_anamnese_tag / B.aceitaram_total);
+    var mot = {};
+    Ms.forEach(function (m) {
+      if (m.C_jornada && m.C_jornada.saidas_entradas) m.C_jornada.saidas_entradas.motivos.forEach(function (x) { mot[x.motivo] = (mot[x.motivo] || 0) + x.n; });
+      else if (m.atualizacao_entradas && m.atualizacao_entradas.perdas) Object.keys(m.atualizacao_entradas.perdas).forEach(function (p) { var nm = NOMES[p] || p; mot[nm] = (mot[nm] || 0) + m.atualizacao_entradas.perdas[p]; });
+    });
+    var perd = Object.keys(mot).reduce(function (a, x) { return a + mot[x]; }, 0);
+    var C = { foto_atual: (ult.C_jornada || {}).foto_atual, foto_31_10: (ult.C_jornada || {}).foto_31_10, parados_31_10: (ult.C_jornada || {}).parados_31_10,
+      saidas_entradas: { base: B.novos, perdidos: perd, pct: r1(100 * perd / B.novos), motivos: Object.keys(mot).map(function (x) { return { motivo: x, n: mot[x] }; }).sort(function (a, b) { return b.n - a.n; }) } };
+    var A = { entradas: {}, cobertura: {} };
+    ['total', 'novos', 'antigos', 'legado', 'a_confirmar'].forEach(function (c) { A.entradas[c] = soma(ap, function (m) { return m.A_entrada.entradas[c]; }); });
+    ['base', 'entraram', 'fora'].forEach(function (c) { A.cobertura[c] = soma(ap, function (m) { return m.A_entrada.cobertura[c]; }); });
+    A.cobertura.pct = r1(100 * A.cobertura.entraram / A.cobertura.base);
+    var mf = {}; ap.forEach(function (m) { m.A_entrada.cobertura.motivos_fora.forEach(function (x) { mf[x.motivo] = (mf[x.motivo] || 0) + x.n; }); });
+    A.cobertura.motivos_fora = Object.keys(mf).map(function (x) { return { motivo: x, n: mf[x] }; });
+    var Ds = ap.map(function (m) { return m.D_checkins; }).filter(Boolean);
+    var sR = function (q, c) { return soma(Ds, function (d) { return d.respostas[q][c]; }) || 0; };
+    var D = { total: { disparados: soma(Ds, function (d) { return d.total.disparados; }), respondidos: soma(Ds, function (d) { return d.total.respondidos; }) },
+      respostas: { P1: { 'Sim': sR('P1', 'Sim'), 'Não': sR('P1', 'Não') }, P2: { 'Melhora total': sR('P2', 'Melhora total'), 'Melhora parcial': sR('P2', 'Melhora parcial'), 'Sem mudança': sR('P2', 'Sem mudança'), 'Piora parcial': sR('P2', 'Piora parcial') } },
+      contato_humano: { acionamentos: soma(Ds, function (d) { return d.contato_humano.acionamentos; }) } };
+    D.total.pct = r1(100 * D.total.respondidos / D.total.disparados);
+    var Fs = ap.map(function (m) { return m.F_engajamento; }).filter(Boolean);
+    var grp = function (nome) { var a = soma(Fs, function (f) { return f[nome] && f[nome].ativos; }), e = soma(Fs, function (f) { return f[nome] && f[nome].engajados; }); return { ativos: a, engajados: e, pct: a ? r1(100 * e / a) : null }; };
+    var F = { participantes_ativos: soma(Fs, function (f) { return f.participantes_ativos; }), mandaram_mensagem: soma(Fs, function (f) { return f.mandaram_mensagem; }), meta: (Fs[0] || {}).meta || 60, entradas_antes_de_outubro: grp('entradas_antes_de_outubro'), entradas_de_outubro: grp('entradas_de_outubro') };
+    F.pct = r1(100 * F.mandaram_mensagem / F.participantes_ativos);
+    F.entradas_de_outubro.pct_sem_clique = r1(100 * soma(Fs, function (f) { return f.entradas_de_outubro && f.entradas_de_outubro.sem_clique_de_aceite; }) / F.entradas_de_outubro.ativos);
+    var Gs = ap.map(function (m) { return m.G_conversas; }).filter(Boolean);
+    var G = { volume: { conversas_com_mensagem_de_paciente: soma(Gs, function (g) { return g.volume.conversas_com_mensagem_de_paciente; }) }, assuntos_tags: juntar(Gs.map(function (g) { return g.assuntos_tags; })),
+      sem_tag: { pediam_atencao: soma(Gs, function (g) { return g.sem_tag.pediam_atencao; }) },
+      efeitos: { conversas_com_relato: soma(Gs, function (g) { return g.efeitos.conversas_com_relato; }), intensos: soma(Gs, function (g) { return g.efeitos.intensos; }), categorias: juntar(Gs.map(function (g) { return g.efeitos.categorias; })) },
+      qualidade: { cor_sabor_odor: soma(Gs, function (g) { return g.qualidade.cor_sabor_odor; }), embalagem: soma(Gs, function (g) { return g.qualidade.embalagem; }) } };
+    var Hs = ap.map(function (m) { return m.H_tempo; }).filter(Boolean);
+    var pess = {}; Hs.forEach(function (h) { h.por_pessoa.forEach(function (p) { (pess[p.pessoa] = pess[p.pessoa] || []).push(p); }); });
+    var H = { respondidas: soma(Hs, function (h) { return h.respondidas; }), mediana_horas_uteis: pond(Hs, function (h) { return h.mediana_horas_uteis; }, function (h) { return h.respondidas; }), pct_mesmo_dia_util: pond(Hs, function (h) { return h.pct_mesmo_dia_util; }, function (h) { return h.respondidas; }), sem_resposta_ate_31_10: soma(Hs, function (h) { return h.sem_resposta_ate_31_10; }),
+      regra: 'Segunda a sexta, 9h às 18h, horário de Brasília, sem feriados. No acumulado, mediana e percentual são médias dos meses ponderadas pelas mensagens respondidas.',
+      por_pessoa: Object.keys(pess).map(function (n) { var l = pess[n]; return { pessoa: n, respondidas: soma(l, function (p) { return p.respondidas; }), mediana_horas_uteis: pond(l, function (p) { return p.mediana_horas_uteis; }, function (p) { return p.respondidas; }), pct_mesmo_dia_util: pond(l, function (p) { return p.pct_mesmo_dia_util; }, function (p) { return p.respondidas; }) }; }).sort(function (a, b) { return b.respondidas - a.respondidas; }) };
+    var Is = ap.map(function (m) { return m.I_postura; }).filter(Boolean), I0 = Is[Is.length - 1];
+    var pp = {}; Is.forEach(function (it) { it.por_pessoa.forEach(function (p) { var o = pp[p.pessoa] = pp[p.pessoa] || { pessoa: p.pessoa, conversas: 0, valores: I0.criterios.map(function () { return [null, null]; }) }; o.conversas += p.conversas; p.valores.forEach(function (v, i) { if (v[1] != null) { o.valores[i][0] = (o.valores[i][0] || 0) + v[0]; o.valores[i][1] = (o.valores[i][1] || 0) + v[1]; } }); }); });
+    var I = { conversas_avaliadas: soma(Is, function (x) { return x.conversas_avaliadas; }), metodo: I0 ? I0.metodo : '', criterios: I0 ? I0.criterios.map(function (c, i) { return { criterio: c.criterio, ok: soma(Is, function (x) { return x.criterios[i].ok; }), base: soma(Is, function (x) { return x.criterios[i].base; }) }; }) : [],
+      por_pessoa: Object.keys(pp).map(function (n) { return pp[n]; }).sort(function (a, b) { return b.conversas - a.conversas; }) };
+    var Js = ap.map(function (m) { return m.J_creditos; }).filter(Boolean);
+    var J = { creditos: soma(Js, function (j) { return j.creditos; }), teto: soma(Js, function (j) { return j.teto; }) }; J.pct_teto = r1(100 * J.creditos / J.teto);
+    var ini = abrev(ks[0]), fim = abrev(ks[ks.length - 1]);
+    return {
+      rotulo: 'Desde o início', total: true, data_apuracao: ult.data_apuracao, de: ini, ate: fim,
+      detalhe: Ms.some(function (m) { return m.detalhe; }),
+      janela: 'De ' + ini + ' a ' + fim + '. Entradas de cada mês acompanhadas até a última apuração (' + dataBR(ult.data_apuracao) + ').',
+      principais: { entradas_novos: B.novos, aceite_pct: B.aceite_pct, anamnese_pct: B.anamnese_pct, engajamento_pct: F.pct, resposta_checkin_pct: D.total.pct, pct_mesmo_dia_util: H.pct_mesmo_dia_util },
+      A_entrada: A, B_conversao: B, C_jornada: C, D_checkins: D, F_engajamento: F, G_conversas: G, H_tempo: H, I_postura: I, J_creditos: J,
+      K_nao_apurado: ult.K_nao_apurado || [],
+      meses_apurados: ap.length,
+      rot_apurados: ap.length < Ms.length ? ks.filter(function (k) { return DADOS.meses[k].A_entrada; }).map(abrev).join(', ') : '',
+      nota_metodo: [
+        'Desde o início = soma de todos os meses, de ' + ini + ' a ' + fim + '. Taxas recalculadas sobre os totais.',
+        'Convite, aceite, anamnese e saídas: setembro entra pela atualização das entradas de setembro com a regra de outubro (' + num((Ms[0].atualizacao_entradas || {}).novos) + ' novos), não pelos ' + num((Ms[0].principais || {}).convites_novos) + ' convites do relatório publicado.',
+        'Engajamento, check-ins, conversas, tempo de resposta, postura, cobertura e créditos: só os meses apurados pelo agente (' + ap.map(function (m) { return m.rotulo.split(' ')[0].toLowerCase(); }).join(', ') + '). Setembro não foi apurado nesses indicadores.',
+        'Engajamento acumulado soma os participantes de cada mês; quem esteve ativo em mais de um mês conta uma vez em cada.',
+        'Onde estão os pacientes mostra a leitura mais recente.'
+      ]
+    };
+  }
+
+  function render(k) {
+    var m = k === 'total' ? (ACUM = ACUM || acumulado()) : DADOS.meses[k];
+    semComparacao = k === 'total';
+    if (!m.A_entrada) return renderSetembro(k, m);
+    var kA = k === 'total' ? null : anterior(k), ant = kA ? DADOS.meses[kA].principais : {};
+    var P = m.principais, A = m.A_entrada, B = m.B_conversao, C = m.C_jornada, D = m.D_checkins, F = m.F_engajamento, G = m.G_conversas, H = m.H_tempo, I = m.I_postura, J = m.J_creditos;
+    var antNovos = ant.entradas_novos != null ? ant.entradas_novos : ant.convites_novos;
+    var soAp = m.total && m.rot_apurados ? '<span class="chip">só ' + m.rot_apurados + '</span>' : '';
+    var h = '<div class="kpis">' +
+      kpi(num(P.entradas_novos), 'pacientes novos convidados', m.em_andamento ? '<span class="chip">até ' + dataBR(m.data_apuracao).slice(0, 5) + '</span>' : delta(P.entradas_novos, antNovos, 'n', kA)) +
+      kpi(pct(P.aceite_pct), 'aceitaram o convite', delta(P.aceite_pct, ant.aceite_pct, 'pp', kA)) +
+      kpi(pct(P.anamnese_pct), 'de quem aceitou fez a anamnese', delta(P.anamnese_pct, ant.anamnese_pct, 'pp', kA)) +
+      kpi(pct(P.engajamento_pct), 'engajamento dos ativos', meta(P.engajamento_pct, 60) + delta(P.engajamento_pct, ant.engajamento_pct, 'pp', kA) + soAp) +
+      kpi(pct(P.resposta_checkin_pct), 'responderam o check-in', delta(P.resposta_checkin_pct, ant.resposta_checkin_pct, 'pp', kA) + soAp) +
+      kpi(pct(P.pct_mesmo_dia_util), 'resposta humana no mesmo dia útil', delta(P.pct_mesmo_dia_util, ant.pct_mesmo_dia_util, 'pp', kA) + soAp) + '</div>';
+
+    h += '<div class="grid g-2-1"><div class="card"><h2>Do convite à anamnese <small>novos, até ' + dataBR(m.data_apuracao).slice(0, 5) + '</small></h2>' + funil(B.novos, B.aceite, B.anamnese_chegada_etapa3, num(B.ainda_sem_resposta) + ' ainda sem resposta (' + num(B.ainda_no_prazo) + ' no prazo) · e-mail, fora das taxas: ' + num(A.entradas.antigos) + ' antigos, ' + num(A.entradas.legado) + ' legado', B.aceite_pct, B.anamnese_pct) + '</div>';
+    h += '<div class="human"><p class="eyebrow">Canal de contato humano</p><div class="big">' + num(G.volume ? I.conversas_avaliadas : 0) + '<small>conversas atendidas</small></div><div class="kv"><div><b>' + num(H.mediana_horas_uteis, 1) + ' h</b>mediana da 1ª resposta (úteis)</div><div><b>' + pct(H.pct_mesmo_dia_util) + '</b>no mesmo dia útil</div><div><b>' + num(D.contato_humano.acionamentos) + '</b>encaminhados pelo check-in</div><div><b>' + num(H.sem_resposta_ate_31_10) + '</b>mensagens sem resposta</div></div></div></div>';
+
+    var foto = C.foto_31_10;
+    var FA = C.foto_atual;
+    h += FA ? '<div class="card"><h2>Onde estão os pacientes <small>' + num(FA.total_abertos) + ' ativos em ' + dataBR(FA.data).slice(0, 5) + '</small></h2>' + etapas(FA.etapas, FA.parados) + '</div>'
+            : '<div class="card"><h2>Onde estão os pacientes <small>' + num(foto.total_abertos) + ' ativos em 31/10</small></h2>' + etapas(foto.etapas, [C.parados_31_10.etapa1, C.parados_31_10.etapa2, C.parados_31_10.etapa3]) + '</div>';
+
+    var R = D.respostas, tot2 = R.P2['Melhora total'] + R.P2['Melhora parcial'] + R.P2['Sem mudança'] + R.P2['Piora parcial'];
+    var seg = function (v, t, cor, rot) { return v ? '<div style="flex:' + v + ';background:' + cor + '" title="' + rot + ': ' + v + '">' + (100 * v / t >= 12 ? num(v) : '') + '</div>' : ''; };
+    h += '<div class="grid g-3">';
+    h += '<div class="card"><h2>Saídas do funil <small>' + (m.total ? 'novos, ' + m.de + ' a ' + m.ate : 'novos do mês') + '</small></h2><div class="big">' + num(C.saidas_entradas.perdidos) + '<small>' + pct(C.saidas_entradas.pct) + ' das entradas</small></div>' + barras(C.saidas_entradas.motivos.filter(function (x) { return x.n > 0; }).map(function (x) { return [x.motivo.replace(/ \(.*\)$/, ''), x.n]; })) + '</div>';
+    h += '<div class="card"><h2>Check-ins <small>' + num(D.total.respondidos) + ' de ' + num(D.total.disparados) + '</small></h2><div class="big">' + pct(D.total.pct) + '<small>de resposta</small></div>' +
+      '<p class="cap">Efeito indesejado (P1)</p><div class="split">' + seg(R.P1['Não'], R.P1['Não'] + R.P1['Sim'], 'var(--g2)', 'Não') + seg(R.P1['Sim'], R.P1['Não'] + R.P1['Sim'], 'var(--violet)', 'Sim') + '</div><div class="legend"><span><i style="background:var(--g2)"></i>Não ' + R.P1['Não'] + '</span><span><i style="background:var(--violet)"></i>Sim ' + R.P1['Sim'] + '</span></div>' +
+      '<p class="cap">Evolução (P2)</p><div class="split">' + seg(R.P2['Melhora total'], tot2, 'var(--g1)', 'Melhora total') + seg(R.P2['Melhora parcial'], tot2, 'var(--g3)', 'Melhora parcial') + seg(R.P2['Sem mudança'], tot2, 'var(--violet)', 'Sem mudança') + seg(R.P2['Piora parcial'], tot2, 'var(--bad)', 'Piora parcial') + '</div><div class="legend"><span><i style="background:var(--g1)"></i>Total ' + R.P2['Melhora total'] + '</span><span><i style="background:var(--g3)"></i>Parcial ' + R.P2['Melhora parcial'] + '</span><span><i style="background:var(--violet)"></i>Sem mudança ' + R.P2['Sem mudança'] + '</span><span><i style="background:var(--bad)"></i>Piora ' + R.P2['Piora parcial'] + '</span></div></div>';
+    h += '<div class="card"><h2>Engajamento <small>' + num(F.mandaram_mensagem) + ' de ' + num(F.participantes_ativos) + '</small></h2><div class="big">' + pct(F.pct) + '</div><div class="meter"><div class="mf" style="width:' + F.pct + '%"></div><div class="mk" style="left:' + F.meta + '%" title="Meta ' + F.meta + '%"></div></div><div class="meter-lbl"><span>0%</span><span>meta ' + F.meta + '%</span><span>100%</span></div>' +
+      barras([['Entraram antes do mês', F.entradas_antes_de_outubro.pct, pct(F.entradas_antes_de_outubro.pct)], ['Entraram no mês', F.entradas_de_outubro.pct, pct(F.entradas_de_outubro.pct)], ['Entraram no mês, sem o aceite', F.entradas_de_outubro.pct_sem_clique, pct(F.entradas_de_outubro.pct_sem_clique)]], 100) + '</div>';
+    h += '</div>';
+
+    h += '<div class="grid g-1-1">';
+    h += '<div class="card"><h2>Entrada e cobertura</h2><div class="big">' + pct(A.cobertura.pct) + '<small>' + num(A.cobertura.entraram) + ' de ' + num(A.cobertura.base) + ' com 1º pedido entraram no CC</small></div>' + barras(A.cobertura.motivos_fora.map(function (x) { return [x.motivo.replace(/ \(.*\)$/, '').replace('Já tinham a tag CC_negocio_criado, sem negócio no CC', 'Bloqueados pela tag CC_negocio_criado'), x.n]; })) + '<p class="cap">' + num(A.cobertura.fora) + ' ficaram fora · entradas do mês: ' + num(A.entradas.novos) + ' novos, ' + num(A.entradas.antigos) + ' antigos, ' + num(A.entradas.legado) + ' legado, ' + num(A.entradas.a_confirmar) + ' a confirmar</p></div>';
+    h += '<div class="card"><h2>Resposta ao convite <small>novos, até ' + dataBR(m.data_apuracao).slice(0, 5) + '</small></h2>' + barras([['Aceitaram', B.aceite, pct(B.aceite_pct)], ['Sem resposta no prazo', B.sem_resposta_tag, pct(B.sem_resposta_pct)], ['Ainda sem resposta', B.ainda_sem_resposta, pct(100 * B.ainda_sem_resposta / B.novos)], ['Recusaram', B.recusa, pct(B.recusa_pct)], ['Já participavam', B.ja_participo, pct(100 * B.ja_participo / B.novos)]], B.novos) + '<p class="cap">Pela tag Resposta_Anamnese a anamnese seria ' + pct(B.resposta_anamnese_tag_pct) + ' (referência).</p></div>';
+    h += '</div>';
+
+    h += '<div class="grid g-1-1">';
+    h += '<div class="card"><h2>Efeitos relatados <small>' + num(G.efeitos.conversas_com_relato) + ' conversas · intensos: ' + num(G.efeitos.intensos) + '</small></h2>' + barras(G.efeitos.categorias.slice(0, 8)) + '<p class="cap">Qualidade do óleo: ' + num(G.qualidade.cor_sabor_odor) + ' relato · embalagem: ' + num(G.qualidade.embalagem) + '</p></div>';
+    var temas = G.assuntos_tags.filter(function (t) { return !/^(Aceite_CC|Recusa_CC|Checkin|CheckinBi|Resposta_Anamnese|Sem_resposta_CC|Sem_Resposta_Anamnese|Ja_participo)/.test(t[0]); });
+    h += '<div class="card"><h2>Assuntos das conversas <small>' + num(G.volume.conversas_com_mensagem_de_paciente) + ' conversas · ' + num(G.sem_tag.pediam_atencao) + ' sem tag</small></h2>' + barras(temas) + '<p class="cap">Sem as tags automáticas de aceite, recusa e check-in.</p></div>';
+    h += '</div>';
+
+    var maxR = Math.max.apply(null, H.por_pessoa.map(function (p) { return p.mediana_horas_uteis; }));
+    var cor = function (v) { if (v == null) return ''; var a = Math.max(0.12, v / 100); return 'background:rgba(91,143,11,' + (a * 0.55).toFixed(2) + ')'; };
+    h += '<div class="grid g-1-1">';
+    h += '<div class="card"><h2>Tempo até a 1ª resposta <small>mediana em horas úteis</small></h2>' + barras(H.por_pessoa.map(function (p) { return [p.pessoa + ' (' + p.respondidas + ')', p.mediana_horas_uteis, num(p.mediana_horas_uteis, 1) + ' h']; }), maxR) + '<p class="cap">No mesmo dia útil: ' + H.por_pessoa.map(function (p) { return p.pessoa.split(' ')[0] + ' ' + pct(p.pct_mesmo_dia_util); }).join(' · ') + '</p></div>';
+    h += '<div class="card"><h2>Postura do atendimento <small>' + num(I.conversas_avaliadas) + ' conversas</small></h2><div class="tablewrap"><table><tr><th>Critério</th><th class="n">Total</th>' + I.por_pessoa.map(function (p) { return '<th class="n">' + esc(p.pessoa.split(' ')[0]) + '</th>'; }).join('') + '</tr>' +
+      I.criterios.map(function (c, i) { var t = 100 * c.ok / c.base; return '<tr><td>' + esc(c.criterio) + '</td><td class="heat" style="' + cor(t) + '">' + num(t) + '%</td>' + I.por_pessoa.map(function (p) { var v = p.valores[i]; if (!v[1]) return '<td class="heat">–</td>'; var x = 100 * v[0] / v[1]; return '<td class="heat" style="' + cor(x) + '" title="' + v[0] + ' de ' + v[1] + '">' + (v[1] < 5 ? v[0] + '/' + v[1] : num(x) + '%') + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div></div>';
+    h += '</div>';
+
+    h += '<div class="na-block"><p class="eyebrow">Ainda não apurado</p>' + m.K_nao_apurado.map(function (x) { return '<div class="na-item"><b>' + esc(x.indicador) + '</b>' + esc(x.motivo) + '</div>'; }).join('') + '<div class="na-item"><b>Créditos</b>' + num(J.creditos) + ' de ' + num(J.teto) + ' (' + pct(J.pct_teto) + ')</div></div>';
+    h += serie();
+    h += '<details><summary>Nota de método</summary><ul>' + (m.nota_metodo || []).concat(['Janela: ' + m.janela, 'Postura: ' + I.metodo, 'Tempo de resposta: ' + H.regra]).map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></details>';
+    return h;
+  }
+
+  function selecionar(k) {
+    atual = k;
+    var m = k === 'total' ? (ACUM = ACUM || acumulado()) : DADOS.meses[k];
+    $('titulo').textContent = m.rotulo;
+    $('info').innerHTML = m.total ? 'De ' + m.de + ' a ' + m.ate + ' · última apuração em ' + dataBR(m.data_apuracao) + ' <span class="pill">Acumulado</span>'
+      : (m.data_apuracao ? 'Apuração em ' + dataBR(m.data_apuracao) + (m.em_andamento ? ' · dados do mês até essa data' : ' · entradas do mês acompanhadas até essa data') : esc(m.parcial)) + (m.em_andamento ? ' <span class="pill">Mês em andamento</span>' : '') + (m.linha_de_base ? ' <span class="pill">Linha de base</span>' : '') + (!m.data_apuracao ? ' <span class="pill">Relatório publicado</span>' : '');
+    $('mes').value = k;
+    $('conteudo').innerHTML = '<div style="display:flex;flex-direction:column;gap:14px">' + render(k) + '</div>';
+    if (m.detalhe) {
+      Array.prototype.forEach.call(document.querySelectorAll('#conteudo .card > h2, #conteudo .human > .eyebrow'), function (el) {
+        var t = el.childNodes[0] ? String(el.childNodes[0].textContent).trim() : '';
+        var hit = XMAP.filter(function (x) { return t.indexOf(x[0]) === 0; })[0];
+        if (!hit) return;
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'xbtn'; b.textContent = 'Planilha'; b.title = 'Baixar a planilha com os casos deste cartão';
+        b.addEventListener('click', function () { planilha(hit[1], hit[0]); });
+        if (el.classList.contains('eyebrow')) { el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.gap = '8px'; }
+        el.appendChild(b);
+      });
+    }
+    var tem = !!(m.pdfs && downloads);
+    $('pdf-exec').disabled = !tem; $('pdf-comp').disabled = !tem;
+    $('pdf-status').textContent = m.total ? 'PDFs só por mês.' : !m.pdfs ? 'Sem PDF gerado para este mês.' : (!downloads ? 'PDFs na pasta do agente.' : '');
+    try { localStorage.setItem('cc-mes', k); } catch (e) {}
+  }
+
+  async function baixar(tipo) {
+    var m = DADOS.meses[atual]; if (!m.pdfs || !downloads) return;
+    var caminho = m.pdfs[tipo];
+    $('pdf-status').textContent = 'Preparando o arquivo.';
+    try {
+      var r = await fetch(caminho); if (!r.ok) throw new Error('arquivo');
+      await downloads.save({ filename: caminho.split('/').pop(), data: await r.blob() });
+      $('pdf-status').textContent = 'PDF salvo.';
+    } catch (e) { $('pdf-status').textContent = e && e.code === 'declined' ? 'Download cancelado.' : 'Não foi possível baixar agora.'; }
+  }
+  async function planilha(chaves, titulo) {
+    var m = DADOS.meses[atual];
+    if (!downloads) { $('pdf-status').textContent = 'A exportação de planilha só funciona com o painel aberto no Claude.'; return; }
+    if (!window.XLSX) { $('pdf-status').textContent = 'Não foi possível carregar o gerador de planilha. Recarregue a página.'; return; }
+    $('pdf-status').textContent = 'Preparando a planilha.';
+    try {
+      // Desde o início: junta os arquivos de detalhe de todos os meses, com a coluna mes.
+      var lista = atual === 'total' ? chavesMes().filter(function (k) { return DADOS.meses[k].detalhe; }) : [atual];
+      for (var q = 0; q < lista.length; q++) { var km = lista[q]; if (!DET[km]) { var r = await fetch(DADOS.meses[km].detalhe); if (!r.ok) throw new Error('detalhe'); DET[km] = await r.json(); } }
+      var linhasDe = function (c) {
+        if (atual !== 'total') return (DET[atual].planilhas || {})[c] || [];
+        return lista.reduce(function (acc, km) { return acc.concat(((DET[km].planilhas || {})[c] || []).map(function (l) { var o = { mes: km }; for (var x in l) o[x] = l[x]; return o; })); }, []);
+      };
+      var wb = XLSX.utils.book_new();
+      chaves.forEach(function (c) {
+        var linhas = linhasDe(c);
+        var ws = XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ aviso: 'sem casos neste mês' }]);
+        if (linhas.length) {
+          var cab = Object.keys(linhas[0]);
+          cab.forEach(function (col, j) {
+            if (col.indexOf('link_') !== 0) return;
+            for (var i = 0; i < linhas.length; i++) { var ref = XLSX.utils.encode_cell({ r: i + 1, c: j }); if (ws[ref] && ws[ref].v) ws[ref].l = { Target: ws[ref].v }; }
+          });
+          ws['!cols'] = cab.map(function (col) { return { wch: col.indexOf('link_') === 0 ? 48 : Math.max(12, col.length + 2) }; });
+          ws['!autofilter'] = { ref: ws['!ref'] };
+        }
+        XLSX.utils.book_append_sheet(wb, ws, ABA[c] || c);
+      });
+      var sobre = [{ item: 'Recorte', valor: atual === 'total' ? 'Desde o início (meses com planilha: ' + lista.join(', ') + ')' : (DET[atual].mes || atual) }];
+      lista.forEach(function (km) { sobre.push({ item: 'Gerada em (' + km + ')', valor: DET[km].gerado_em || '' }); (DET[km].notas || []).forEach(function (n) { sobre.push({ item: 'Nota (' + km + ')', valor: n }); }); });
+      if (atual === 'total') sobre.push({ item: 'Nota', valor: 'Setembro/2026 não tem planilha: foi apurado antes da exportação existir.' });
+      var wsS = XLSX.utils.json_to_sheet(sobre); wsS['!cols'] = [{ wch: 20 }, { wch: 110 }];
+      XLSX.utils.book_append_sheet(wb, wsS, 'Sobre');
+      var buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      var nome = 'CC_' + atual + '_' + titulo.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/_+$/, '') + '.xlsx';
+      await downloads.save({ filename: nome, data: new Uint8Array(buf) });
+      $('pdf-status').textContent = 'Planilha salva.';
+    } catch (e) { $('pdf-status').textContent = e && e.code === 'declined' ? 'Download cancelado.' : 'Não foi possível gerar a planilha agora.'; }
+  }
+  /* ---------- Indicadores clínicos (respostas dos formulários; por enquanto, a anamnese) ---------- */
+  var modo = 'prog', CLIN = null, atualClin = null;
+  var NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var rotuloClin = function (k) { return k === 'total' ? 'Desde o início' : NOMES_MES[Number(k.slice(5, 7)) - 1] + ' de ' + k.slice(0, 4); };
+  var clinKs = function () { return Object.keys(CLIN.meses).sort(); };
+  var ordena = function (o) { return Object.keys(o).map(function (k) { return [k, o[k]]; }).sort(function (a, b) { return (a[0] === 'Outras' || a[0] === 'Outros') - (b[0] === 'Outras' || b[0] === 'Outros') || b[1] - a[1]; }); };
+  var pc = function (n, t) { return t ? 100 * n / t : null; };
+  var CURTO = { 'Hipertensão (Pressão alta)': 'Hipertensão', 'Transtornos do Humor / Personalidade': 'Transtornos de humor ou personalidade', 'Abuso de substâncias (medicamentos ou outras drogas)': 'Abuso de substâncias', 'Fadiga/Falta de Disposição': 'Fadiga ou falta de disposição', 'Transtorno disfórico pré-menstrual': 'Transtorno disfórico pré-menstrual' };
+  var curto = function (s) { return CURTO[s] || s; };
+
+  function indClin(o) {
+    var sim = function (x) { return pc(x.Sim, x.Sim + x['Não']); };
+    var fumaHoje = (o.fumo['Sim, diariamente'] || 0) + (o.fumo['Sim, mas não diariamente'] || 0), baseFumo = o.respostas - (o.fumo['Sem resposta'] || 0);
+    var exp = o.expectativa, baseExp = Object.keys(exp).reduce(function (a, k) { return a + exp[k]; }, 0);
+    return { respostas: o.respostas, idade: o.idade_mediana, doenca: sim(o.doenca), medicamento: sim(o.medicamento), oleo: sim(o.oleo_antes), fuma: pc(fumaHoje, baseFumo), sintoma: pc(o.respostas - o.sem_sintoma, o.respostas), melhorar_muito: pc(exp['Melhorar muito'] || 0, baseExp), curar: pc(exp['Me curar'] || 0, baseExp) };
+  }
+
+  function renderClin(k) {
+    var o = k === 'total' ? CLIN.total : CLIN.meses[k], I = indClin(o), n = o.respostas;
+    var ks = clinKs(), i = ks.indexOf(k), kA = i > 0 ? ks[i - 1] : null, A = kA ? indClin(CLIN.meses[kA]) : null;
+    var andamento = k === ks[ks.length - 1] && CLIN.fonte_atualizada.slice(0, 7) === k;
+    var dl = function (v, campo, tipo) { if (k === 'total') return ''; if (!A) return '<span class="chip">Linha de base</span>'; if (andamento && tipo === 'n') return '<span class="chip">até ' + dataBR(CLIN.fonte_atualizada).slice(0, 5) + '</span>'; return delta(v, A[campo], tipo, kA).replace(/chip (up|down)/, 'chip'); };
+    var h = '<div class="kpis">' +
+      kpi(num(n), 'anamneses respondidas', dl(n, 'respostas', 'n')) +
+      kpi(num(I.idade, I.idade % 1 ? 1 : 0) + ' anos', 'idade mediana', '<span class="chip">' + num(o.idade_min) + ' a ' + num(o.idade_max) + ' anos</span>') +
+      kpi(pct(I.doenca), 'têm doença pré-existente', dl(I.doenca, 'doenca', 'pp')) +
+      kpi(pct(I.medicamento), 'usam algum medicamento', dl(I.medicamento, 'medicamento', 'pp')) +
+      kpi(pct(I.oleo), 'já usaram óleo de cannabis de outra instituição', dl(I.oleo, 'oleo', 'pp')) +
+      kpi(pct(I.fuma), 'fumam atualmente', dl(I.fuma, 'fuma', 'pp')) + '</div>';
+
+    var doencas = ordena(o.doencas), baseD = o.doenca.Sim;
+    h += '<div class="grid g-2-1"><div class="card"><h2>Doenças pré-existentes <small>' + num(baseD) + ' pacientes com doença · % sobre ' + num(n) + ' respostas</small></h2>' +
+      barras(doencas.slice(0, 12).map(function (x) { return [curto(x[0]), x[1], pct(pc(x[1], n))]; })) +
+      '<p class="cap">Cada paciente pode marcar mais de uma doença.' + (doencas.length > 12 ? ' Fora da lista: ' + doencas.slice(12).map(function (x) { return curto(x[0]) + ' ' + x[1]; }).join(' · ') + '.' : '') + '</p></div>';
+    var e = o.expectativa, eTot = Object.keys(e).reduce(function (a, x) { return a + e[x]; }, 0);
+    var seg = function (v, t, cor, rot) { return v ? '<div style="flex:' + v + ';background:' + cor + '" title="' + rot + ': ' + v + '">' + (100 * v / t >= 12 ? num(v) : '') + '</div>' : ''; };
+    h += '<div class="human"><p class="eyebrow">Expectativa com o tratamento</p><div class="big">' + pct(I.melhorar_muito) + '<small>esperam melhorar muito</small></div><div class="kv">' +
+      '<div><b>' + pct(I.curar) + '</b>esperam a cura</div><div><b>' + pct(pc(e['Melhorar pouco'] || 0, eTot)) + '</b>esperam melhorar pouco</div><div><b>' + pct(pc(e['Não sei responder'] || 0, eTot)) + '</b>não souberam responder</div><div><b>' + pct(I.sintoma) + '</b>tiveram algum sintoma nos últimos 15 dias</div></div></div></div>';
+
+    var sint = ordena(o.sintomas);
+    h += '<div class="grid g-1-1"><div class="card"><h2>Sintomas nos últimos 15 dias <small>% sobre ' + num(n) + ' respostas</small></h2>' +
+      barras(sint.map(function (x) { return [curto(x[0]), x[1], pct(pc(x[1], n))]; }).concat([['Nenhum sintoma', o.sem_sintoma, pct(pc(o.sem_sintoma, n))]]), n) +
+      '<p class="cap">Quem teve sintoma marcou em média ' + num(o.media_sintomas, 1) + ' sintomas da lista. "Outros" reúne o que o paciente escreveu.</p></div>';
+    var FX = ['até 17', '18 a 29', '30 a 39', '40 a 49', '50 a 59', '60 a 69', '70 ou mais'];
+    var fm = o.fumo, fT = n - (fm['Sem resposta'] || 0);
+    h += '<div class="card"><h2>Perfil <small>idade e tabagismo</small></h2>' +
+      barras(FX.map(function (f) { return [f + ' anos', o.idade[f] || 0, pct(pc(o.idade[f] || 0, n))]; }), n) +
+      '<p class="cap">Tabagismo (cigarro, tabaco ou outras substâncias)</p><div class="split">' +
+      seg(fm['Não, nunca fumei'] || 0, fT, 'var(--g1)', 'Nunca fumou') + seg(fm['Não, mas já fumei'] || 0, fT, 'var(--g3)', 'Já fumou') + seg(fm['Sim, mas não diariamente'] || 0, fT, 'var(--violet)', 'Fuma, não todo dia') + seg(fm['Sim, diariamente'] || 0, fT, 'var(--bad)', 'Fuma todo dia') +
+      '</div><div class="legend"><span><i style="background:var(--g1)"></i>Nunca fumou ' + (fm['Não, nunca fumei'] || 0) + '</span><span><i style="background:var(--g3)"></i>Já fumou ' + (fm['Não, mas já fumei'] || 0) + '</span><span><i style="background:var(--violet)"></i>Fuma, não todo dia ' + (fm['Sim, mas não diariamente'] || 0) + '</span><span><i style="background:var(--bad)"></i>Fuma todo dia ' + (fm['Sim, diariamente'] || 0) + '</span></div></div></div>';
+
+    var lin = function (rot, f, fmt) { return '<tr><td>' + rot + '</td>' + ks.map(function (x) { var v = f(indClin(CLIN.meses[x])); return '<td class="n">' + (v == null ? '<span class="empty">–</span>' : fmt(v)) + '</td>'; }).join('') + '<td class="n"><b>' + fmt(f(indClin(CLIN.total))) + '</b></td></tr>'; };
+    h += '<div class="card"><h2>Série histórica <small>set/26 começa em 10/09 · ' + abrev(ks[ks.length - 1]) + ' até ' + dataBR(CLIN.fonte_atualizada).slice(0, 5) + '</small></h2><div class="tablewrap"><table><tr><th>Indicador</th>' + ks.map(function (x) { return '<th class="n">' + abrev(x) + '</th>'; }).join('') + '<th class="n">Total</th></tr>' +
+      lin('Anamneses respondidas', function (x) { return x.respostas; }, num) +
+      lin('Idade mediana', function (x) { return x.idade; }, function (v) { return num(v, v % 1 ? 1 : 0); }) +
+      lin('Doença pré-existente', function (x) { return x.doenca; }, pct) +
+      lin('Usam medicamento', function (x) { return x.medicamento; }, pct) +
+      lin('Óleo de outra instituição', function (x) { return x.oleo; }, pct) +
+      lin('Fumam atualmente', function (x) { return x.fuma; }, pct) +
+      lin('Algum sintoma em 15 dias', function (x) { return x.sintoma; }, pct) +
+      lin('Esperam melhorar muito', function (x) { return x.melhorar_muito; }, pct) + '</table></div></div>';
+
+    h += '<div class="na-block"><p class="eyebrow">Ainda não apurado</p>' +
+      '<div class="na-item"><b>Quais medicamentos</b>Resposta escrita pelo paciente; falta classificar.</div>' +
+      '<div class="na-item"><b>Quais óleos anteriores</b>Resposta escrita pelo paciente; falta classificar.</div>' +
+      '<div class="na-item"><b>Comentários e sugestões</b>' + num(o.comentario) + ' pacientes deixaram comentário; o texto não aparece no painel.</div>' +
+      '<div class="na-item"><b>Formulários de acompanhamento</b>Entram aqui quando forem incluídos.</div></div>';
+    h += '<details><summary>Nota de método</summary><ul>' + [
+      'Fonte: planilha de respostas do Formulário de Anamnese Cuidado Continuado (Microsoft Forms), lida em ' + dataBR(CLIN.fonte_atualizada) + '.',
+      'O mês é o da data de conclusão da resposta. Percentuais sobre as respostas do mês; nas perguntas de sim ou não, sobre quem respondeu.',
+      'Conta todas as respostas do formulário, inclusive de quem entrou no programa antes do mês. Por isso o número difere da chegada à etapa 3 no painel do programa.',
+      'Doenças e sintomas aceitam mais de uma marcação, então a soma passa de 100%. Respostas escritas pelo paciente fora da lista entram em "Outras" ou "Outros".',
+      'O painel mostra só números agregados: nenhum nome, CPF, e-mail, telefone ou texto do paciente.'
+    ].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></details>';
+    return h;
+  }
+
+  function selecionarClin(k) {
+    atualClin = k;
+    $('titulo').textContent = rotuloClin(k);
+    var ks = clinKs(), ult = ks[ks.length - 1];
+    $('info').innerHTML = 'Respostas do formulário de anamnese · atualizado em ' + dataBR(CLIN.fonte_atualizada) +
+      (k === ks[0] ? ' <span class="pill">Linha de base</span>' : '') + (k === ult && CLIN.fonte_atualizada.slice(0, 7) === ult ? ' <span class="pill">Mês em andamento</span>' : '');
+    $('mes').value = k;
+    $('conteudo').innerHTML = '<div style="display:flex;flex-direction:column;gap:14px">' + renderClin(k) + '</div>';
+    try { localStorage.setItem('cc-mes-clin', k); } catch (e) {}
+  }
+
+  function trocar(novo) {
+    modo = novo;
+    $('tab-prog').setAttribute('aria-selected', String(novo === 'prog'));
+    $('tab-clin').setAttribute('aria-selected', String(novo === 'clin'));
+    $('olho').textContent = novo === 'prog' ? 'Indicadores do programa' : 'Indicadores clínicos · Anamnese';
+    $('pdf-exec').style.display = $('pdf-comp').style.display = novo === 'prog' ? '' : 'none';
+    $('pdf-status').textContent = '';
+    try { localStorage.setItem('cc-painel', novo); } catch (e) {}
+    if (novo === 'prog') {
+      if (!DADOS) return;
+      var ks = chaves().filter(function (k) { return k >= (DADOS.inicio_serie || '0000'); });
+      $('mes').innerHTML = '<option value="total">Desde o início</option>' + ks.slice().reverse().map(function (k) { return '<option value="' + k + '">' + esc(DADOS.meses[k].rotulo) + '</option>'; }).join('');
+      selecionar(atual || ks[ks.length - 1]);
+      return;
+    }
+    var abrir = function () {
+      var ks = clinKs();
+      $('mes').innerHTML = ['total'].concat(ks.slice().reverse()).map(function (k) { return '<option value="' + k + '">' + rotuloClin(k) + '</option>'; }).join('');
+      var salvo = null; try { salvo = localStorage.getItem('cc-mes-clin'); } catch (e) {}
+      var ultFechado = ks.filter(function (x) { return x < CLIN.fonte_atualizada.slice(0, 7); }).pop() || ks[ks.length - 1];
+      selecionarClin(atualClin || (salvo && (salvo === 'total' || CLIN.meses[salvo]) ? salvo : ultFechado));
+    };
+    if (CLIN) return abrir();
+    $('conteudo').innerHTML = '<div class="card empty">Carregando os indicadores clínicos.</div>';
+    fetch('dados/clinico_anamnese.json').then(function (r) { return r.json(); }).then(function (j) { CLIN = j; if (modo === 'clin') abrir(); })
+      .catch(function () { $('conteudo').innerHTML = '<div class="card empty">Não foi possível carregar os indicadores clínicos. Recarregue a página.</div>'; });
+  }
+
+  $('pdf-exec').addEventListener('click', function () { baixar('executivo'); });
+  $('pdf-comp').addEventListener('click', function () { baixar('completo'); });
+  $('mes').addEventListener('change', function () { if (modo === 'clin') selecionarClin(this.value); else selecionar(this.value); });
+  $('tab-prog').addEventListener('click', function () { if (modo !== 'prog') trocar('prog'); });
+  $('tab-clin').addEventListener('click', function () { if (modo !== 'clin') trocar('clin'); });
+
+  var painelSalvo = null; try { painelSalvo = localStorage.getItem('cc-painel'); } catch (e) {}
+  fetch('dados/historico_mensal.json').then(function (r) { return r.json(); }).then(function (j) {
+    DADOS = j;
+    var ks = chaves().filter(function (k) { return k >= (j.inicio_serie || '0000'); });
+    var salvo = null; try { salvo = localStorage.getItem('cc-mes'); } catch (e) {}
+    atual = salvo && (salvo === 'total' || j.meses[salvo]) ? salvo : ks[ks.length - 1];
+    if (modo === 'prog') trocar('prog');
+  }).catch(function () { if (modo === 'prog') $('conteudo').innerHTML = '<div class="card empty">Não foi possível carregar os dados. Recarregue a página.</div>'; });
+  if (painelSalvo === 'clin') trocar('clin');
+
+  if (window.claude && window.claude.use) window.claude.use('downloads').then(function (d) { downloads = d; if (atual && modo === 'prog' && DADOS) selecionar(atual); }).catch(function () {});
+})();
+</script>
+
+
+</body></html>
